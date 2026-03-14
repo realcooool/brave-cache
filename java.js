@@ -1,5 +1,5 @@
-javascript:(async function(){
-    const UI_ID="slick-v7-nuclear";
+(async function(){
+    const UI_ID="slick-v7-inline";
     const FAIL_TEXT="We are sorry, but we are unable to process your payment.";
     
     let existing=document.getElementById(UI_ID);
@@ -44,10 +44,7 @@ javascript:(async function(){
         }
     };
     
-    const updateStat=(txt,col)=>{
-        const s=document.getElementById("af-stat");
-        if(s){s.innerText=txt;s.style.color=col||"#888"}
-    };
+    const updateStat=(txt,col)=>{const s=document.getElementById("af-stat");if(s){s.innerText=txt;s.style.color=col||"#888"}};
     
     function handleSuccess(){
         if(!state.isRunning){return}
@@ -62,7 +59,7 @@ javascript:(async function(){
             sucBox.style.display="block";
             sucBox.innerText=`SUCCESS!\nHIT CARD: ${winningCard?winningCard.raw:"Unknown"}`
         }
-        updateStat("SUCCESS","#0f0");
+        updateStat("CHECKOUT SUCCESS","#0f0");
         
         document.getElementById("af-body").style.display = "none";
         document.getElementById("af-min-btn").innerText = "[ + ]";
@@ -168,36 +165,35 @@ javascript:(async function(){
         }catch(e){alert("Format Error")}
     }
     
-    /* --- INLINE UI CREATION (Bypasses CSP and Stacking Contexts) --- */
+    /* --- CSP-SAFE INLINE UI CREATION --- */
     const ui=document.createElement("div");
     ui.id=UI_ID;
-    // Massive inline styling block
-    ui.style.cssText = "position: fixed; top: 10px; right: 10px; width: 250px; background: rgba(10,10,10,0.98); border: 2px solid #333; border-radius: 8px; z-index: 2147483647; font-family: monospace; color: #eee; padding: 10px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); box-sizing: border-box; overflow: hidden;";
+    
+    // Injecting styles directly onto the element bypasses strict CSP style-src blocks
+    ui.style.cssText = "position:fixed;top:15px;right:15px;width:250px;background:rgba(10,10,10,0.98);border:1px solid #333;border-radius:8px;z-index:2147483647;font-family:monospace;color:#eee;padding:10px;box-shadow:0 10px 40px rgba(0,0,0,0.9);box-sizing:border-box;";
     
     ui.innerHTML=`
-        <div id="af-drag" style="cursor: move; touch-action: none; font-size: 12px; font-weight: bold; color: #777; display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 6px; user-select: none;">
-            <span>V7.0_MOBILE</span>
-            <div style="display:flex; gap:12px; align-items:center;">
+        <div id="af-drag" style="cursor:move;touch-action:none;font-size:11px;color:#888;display:flex;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid #333;padding-bottom:5px;">
+            <span style="font-weight:bold;color:#fff;">V7.0_CSP_BYPASS</span>
+            <div style="display:flex;gap:10px;align-items:center;">
                 <span id="af-stat">IDLE</span>
-                <span id="af-min-btn" style="cursor:pointer; color:#fff; font-size: 14px; padding: 0 5px;">[ - ]</span>
+                <span id="af-min-btn" style="padding:0 5px;cursor:pointer;color:#fff;font-weight:bold;">[ - ]</span>
             </div>
         </div>
         <div id="af-body">
-            <div style="font-size:10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-                RAND_CONTACT <input type="checkbox" id="af-chk" checked style="transform: scale(1.2); margin:0;">
+            <div style="font-size:9px;margin-bottom:5px;display:flex;justify-content:space-between;">RAND_CONTACT <input type="checkbox" id="af-chk" checked style="margin:0;"></div>
+            <textarea id="af-txt" rows="4" style="width:100%;background:#000;border:1px solid #333;color:#0f0;font-size:10px;padding:6px;box-sizing:border-box;resize:none;outline:none;"></textarea>
+            <div style="display:flex;gap:5px;margin-top:8px;">
+                <button id="af-run" style="flex:1;font-size:10px;padding:8px 0;cursor:pointer;background:#111;color:#238636;border:1px solid #238636;font-weight:bold;border-radius:4px;">RUN</button>
+                <button id="af-clr" style="flex:1;font-size:10px;padding:8px 0;cursor:pointer;background:#111;color:#eee;border:1px solid #444;font-weight:bold;border-radius:4px;">CLR</button>
+                <button id="af-stop" style="flex:1;font-size:10px;padding:8px 0;cursor:pointer;background:#111;color:#da3633;border:1px solid #da3633;font-weight:bold;border-radius:4px;">STOP</button>
             </div>
-            <textarea id="af-txt" rows="4" style="width: 100%; background: #000; border: 1px solid #333; color: #0f0; font-size: 11px; padding: 6px; box-sizing: border-box; resize: none; margin-bottom: 8px; font-family: monospace;"></textarea>
-            <div style="display: flex; gap: 5px;">
-                <button id="af-run" style="flex: 1; font-size: 11px; padding: 10px 0; cursor: pointer; background: #111; color: #238636; border: 1px solid #238636; font-weight: bold; border-radius: 4px;">RUN</button>
-                <button id="af-clr" style="flex: 1; font-size: 11px; padding: 10px 0; cursor: pointer; background: #111; color: #aaa; border: 1px solid #444; font-weight: bold; border-radius: 4px;">CLR</button>
-                <button id="af-stop" style="flex: 1; font-size: 11px; padding: 10px 0; cursor: pointer; background: #111; color: #da3633; border: 1px solid #da3633; font-weight: bold; border-radius: 4px;">STOP</button>
-            </div>
-            <div id="af-success" style="display: none; background: #0b1a0b; border: 1px solid #238636; color: #0f0; font-size: 10px; padding: 8px; margin-top: 10px; word-break: break-all; border-radius: 4px;"></div>
+            <div id="af-success" style="display:none;background:#0b1a0b;border:1px solid #238636;color:#0f0;font-size:9px;padding:6px;margin-top:8px;word-break:break-all;"></div>
         </div>
     `;
     
-    // Attach to HTML root, NOT the body, to escape layout traps
-    (document.documentElement || document.body).appendChild(ui);
+    // Appending to documentElement ensures it sits above React/SPA overlays
+    document.documentElement.appendChild(ui);
     
     document.getElementById("af-run").onclick=startAll;
     document.getElementById("af-clr").onclick=()=>document.getElementById("af-txt").value="";
@@ -216,7 +212,7 @@ javascript:(async function(){
         if(isMin) {
             body.style.display = "none";
             e.target.innerText = "[ + ]";
-            ui.style.width = "auto"; 
+            ui.style.width = "180px";
         } else {
             body.style.display = "block";
             e.target.innerText = "[ - ]";
@@ -238,7 +234,7 @@ javascript:(async function(){
     
     const dragMove = (e) => {
         if(!drag) return;
-        if(e.touches && e.cancelable) e.preventDefault(); // Stop mobile scroll
+        if(e.touches) e.preventDefault(); 
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         ui.style.left = (clientX + off[0]) + 'px';
@@ -249,10 +245,10 @@ javascript:(async function(){
     const dragEnd = () => { drag = false; };
 
     header.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', dragMove, {passive: false});
+    document.addEventListener('mousemove', dragMove);
     document.addEventListener('mouseup', dragEnd);
 
-    header.addEventListener('touchstart', dragStart, {passive: false});
+    header.addEventListener('touchstart', dragStart, {passive: true});
     document.addEventListener('touchmove', dragMove, {passive: false});
     document.addEventListener('touchend', dragEnd);
     document.addEventListener('touchcancel', dragEnd);
