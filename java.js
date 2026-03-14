@@ -1,7 +1,8 @@
 (async function(){
-    const UI_ID="slick-v6-mobile";
+    const UI_ID="slick-v6-mobile-fix";
     const FAIL_TEXT="We are sorry, but we are unable to process your payment.";
     
+    // Cleanup if already running
     let existing=document.getElementById(UI_ID);
     if(existing){existing.remove()}
     
@@ -60,6 +61,10 @@
             sucBox.innerText=`SUCCESS!\nHIT CARD: ${winningCard?winningCard.raw:"Unknown"}`
         }
         updateStat("CHECKOUT SUCCESS","#0f0");
+        
+        // Mobile-friendly collapse on success so you can see the page
+        document.getElementById("af-body").style.display = "none";
+        document.getElementById("af-min-btn").innerText = "[ + ]";
         
         if(orderData){
             let domsText=`/doms data: ${ orderData }`;
@@ -163,14 +168,37 @@
         }catch(e){alert("Format Error")}
     }
     
-    /* --- UI CREATION --- */
+    /* --- MOBILE-SAFE UI CREATION --- */
     const s=document.createElement("style");
-    s.innerHTML=`#${ UI_ID } { position: fixed; top: 15px; right: 15px; width: 250px; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; z-index: 999999; font-family: monospace; color: #eee; padding: 12px; } .af-h { cursor: move; font-size: 10px; color: #555; display: flex; justify-content: space-between; margin-bottom: 8px; } #af-txt { width: 100%; background: #000; border: 1px solid #222; color: #0f0; font-size: 10px; padding: 6px; box-sizing: border-box; } .af-b { display: flex; gap: 4px; margin-top: 8px; } .af-b button { flex: 1; font-size: 10px; padding: 6px; cursor: pointer; background: #111; color: #eee; border: 1px solid #444; } #af-success { display: none; background: #0b1a0b; border: 1px solid #238636; color: #0f0; font-size: 9px; padding: 6px; margin-top: 8px; word-break: break-all; }`;
+    // Z-INDEX MAXED TO 2147483647
+    s.innerHTML=`
+        #${UI_ID} { position: fixed; top: 15px; right: 15px; width: 250px; background: rgba(10,10,10,0.95); border: 1px solid #333; border-radius: 8px; z-index: 2147483647 !important; font-family: monospace; color: #eee; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); } 
+        .af-h { cursor: move; touch-action: none; font-size: 11px; color: #555; display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 5px; } 
+        #af-txt { width: 100%; background: #000; border: 1px solid #222; color: #0f0; font-size: 10px; padding: 6px; box-sizing: border-box; resize: none; } 
+        .af-b { display: flex; gap: 4px; margin-top: 8px; } 
+        .af-b button { flex: 1; font-size: 10px; padding: 8px 0; cursor: pointer; background: #111; color: #eee; border: 1px solid #444; font-weight: bold; border-radius: 4px; } 
+        #af-success { display: none; background: #0b1a0b; border: 1px solid #238636; color: #0f0; font-size: 9px; padding: 6px; margin-top: 8px; word-break: break-all; }
+        #af-min-btn { padding: 0 5px; cursor: pointer; color: #fff; }
+    `;
     document.head.appendChild(s);
     
     const ui=document.createElement("div");
     ui.id=UI_ID;
-    ui.innerHTML=`<div class="af-h" id="af-drag"><span>V6.8_MOBILE</span><div style="display:flex;gap:10px;"><span id="af-stat">IDLE</span><span id="af-min-btn" style="cursor:pointer;color:#bbb;font-weight:bold;">[ > ]</span></div></div><div style="font-size:9px;margin-bottom:5px">RAND_CONTACT <input type="checkbox" id="af-chk" checked></div><textarea id="af-txt" rows="5"></textarea><div class="af-b"><button id="af-run">RUN</button><button id="af-clr">CLR</button><button id="af-stop">STOP</button></div><div id="af-success"></div>`;
+    ui.innerHTML=`
+        <div class="af-h" id="af-drag">
+            <span>V6.9_MOBILE</span>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <span id="af-stat">IDLE</span>
+                <span id="af-min-btn">[ - ]</span>
+            </div>
+        </div>
+        <div id="af-body">
+            <div style="font-size:9px;margin-bottom:5px;display:flex;justify-content:space-between;">RAND_CONTACT <input type="checkbox" id="af-chk" checked></div>
+            <textarea id="af-txt" rows="4"></textarea>
+            <div class="af-b"><button id="af-run" style="color:#238636;border-color:#238636;">RUN</button><button id="af-clr">CLR</button><button id="af-stop" style="color:#da3633;border-color:#da3633;">STOP</button></div>
+            <div id="af-success"></div>
+        </div>
+    `;
     document.body.appendChild(ui);
     
     document.getElementById("af-run").onclick=startAll;
@@ -182,40 +210,28 @@
         updateStat("STOPPED","#f44")
     };
     
-    /* --- MINIMIZE / HIDE LOGIC --- */
+    /* --- COLLAPSE LOGIC (Better than hiding off-screen) --- */
     let isMin = false;
-    const toggleMin = (e) => {
-        if(e) e.stopPropagation();
+    document.getElementById("af-min-btn").onclick = (e) => {
         isMin = !isMin;
+        const body = document.getElementById("af-body");
         if(isMin) {
-            ui.dataset.oldLeft = ui.style.left || '';
-            ui.dataset.oldTop = ui.style.top || '';
-            ui.style.transition = 'transform 0.3s ease, right 0.3s ease';
-            ui.style.left = 'auto';
-            ui.style.right = '0px';
-            ui.style.transform = 'translateX(calc(100% - 20px))'; // Leaves 20px sticking out
-            ui.style.opacity = '0.6';
+            body.style.display = "none";
+            e.target.innerText = "[ + ]";
+            ui.style.width = "180px"; // Shrink width slightly when collapsed
         } else {
-            ui.style.transform = 'none';
-            ui.style.right = '15px';
-            if(ui.dataset.oldLeft) {
-                ui.style.left = ui.dataset.oldLeft;
-                ui.style.top = ui.dataset.oldTop;
-                ui.style.right = 'auto';
-            }
-            ui.style.opacity = '1';
-            setTimeout(() => ui.style.transition = 'none', 300); // Remove transition so dragging is smooth
+            body.style.display = "block";
+            e.target.innerText = "[ - ]";
+            ui.style.width = "250px";
         }
     };
-    document.getElementById("af-min-btn").onclick = toggleMin;
-    ui.onclick = (e) => { if(isMin) toggleMin(e); };
 
-    /* --- MOBILE + DESKTOP DRAG LOGIC --- */
+    /* --- MOBILE & DESKTOP DRAG LOGIC --- */
     let drag=false, off=[0,0];
-    const dragHeader = document.getElementById("af-drag");
+    const header = document.getElementById("af-drag");
 
     const dragStart = (e) => {
-        if(e.target.id === 'af-min-btn') return;
+        if(e.target.id === "af-min-btn") return; // Ignore drag if clicking minimize button
         drag = true;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -223,24 +239,25 @@
     };
     
     const dragMove = (e) => {
-        if(!drag || isMin) return;
-        if(e.touches) e.preventDefault(); // Stop mobile screen from scrolling while dragging UI
+        if(!drag) return;
+        if(e.touches) e.preventDefault(); // Prevents mobile screen from scrolling while dragging
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         ui.style.left = (clientX + off[0]) + 'px';
         ui.style.top = (clientY + off[1]) + 'px';
-        ui.style.right = 'auto';
+        ui.style.right = 'auto'; // Disable CSS right anchoring
     };
     
     const dragEnd = () => { drag = false; };
 
     // Desktop
-    dragHeader.addEventListener('mousedown', dragStart);
+    header.addEventListener('mousedown', dragStart);
     document.addEventListener('mousemove', dragMove);
     document.addEventListener('mouseup', dragEnd);
 
-    // Mobile (Touch)
-    dragHeader.addEventListener('touchstart', dragStart, {passive: true});
-    document.addEventListener('touchmove', dragMove, {passive: false}); // passive false allows preventDefault
+    // Mobile
+    header.addEventListener('touchstart', dragStart, {passive: true});
+    document.addEventListener('touchmove', dragMove, {passive: false});
     document.addEventListener('touchend', dragEnd);
+    document.addEventListener('touchcancel', dragEnd);
 })();
