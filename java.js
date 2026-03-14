@@ -1,4 +1,4 @@
-javascript:(async function(){
+(async function(){
     const UI_ID="slick-v6-precision-sync";
     const FAIL_TEXT="We are sorry, but we are unable to process your payment.";
     
